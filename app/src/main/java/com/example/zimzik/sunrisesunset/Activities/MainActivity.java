@@ -43,20 +43,18 @@ public class MainActivity extends AppCompatActivity {
     private RestRepo mRestRepo;
     private Boolean mEnableLocationUpdates = true;
 
-    //fot test
-    private TextView tvLat;
-    private TextView tvLon;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         mTvSunriseTime = findViewById(R.id.et_sunrise_time);
         mTvSunsetTime = findViewById(R.id.et_sunset_time);
         mTvConnectionError = findViewById(R.id.et_connection_error);
         mPlaceAutocompleteFragment = (PlaceAutocompleteFragment) getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment);
         mPlaceAutocompleteFragment.getView().setVisibility(View.INVISIBLE);
 
+        //  Handle when user choose in widget another place from search list
         mPlaceAutocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
             @Override
             public void onPlaceSelected(Place place) {
@@ -70,13 +68,9 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // for test
-
-        tvLat = findViewById(R.id.test_tv_lat);
-        tvLon = findViewById(R.id.test_tv_lon);
-
         mRestRepo = new RestRepo();
 
+        // change action when user change radiobutton
         RadioGroup rgChooseLocation = findViewById(R.id.rg_choose_location);
         rgChooseLocation.setOnCheckedChangeListener((group, checkedId) -> {
             if (checkedId == R.id.rb_other_location) {
@@ -89,8 +83,6 @@ public class MainActivity extends AppCompatActivity {
                 mEnableLocationUpdates = true;
             }
         });
-
-       // mLocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 
         if (!permissionsGranted()) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSION_REQUEST_CODE);
@@ -118,6 +110,7 @@ public class MainActivity extends AppCompatActivity {
         mDisposable.dispose();
     }
 
+    // Enable request location update. Coordinates of current place refresh every 10 seconds
     private void enableRequestLocationUpdate() {
         mLocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -130,6 +123,7 @@ public class MainActivity extends AppCompatActivity {
                 locationListener);
     }
 
+    // Disable request location update
     private void disableRequestLocationUpdate() {
         if (mLocationManager != null) {
             mLocationManager.removeUpdates(locationListener);
@@ -162,21 +156,22 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    // Formatting coordinate string to suitable format for transfer to URL
     private void refreshTime(@Nullable Location location) {
         String provider = location == null ? "" : location.getProvider();
         String lat = location == null ? "" : formatCoordinate(location.getLatitude());
         String lon = location == null ? "" : formatCoordinate(location.getLongitude() * -1);
 
         Log.i(TAG, provider + " " + lat + " " + lon);
-        tvLat.setText("lat: " + lat);
-        tvLon.setText("lon: " + lon);
         setTime(lat, lon);
     }
+
 
     private String formatCoordinate(Double d) {
         return String.format(Locale.getDefault(), "%1$.6f", d);
     }
 
+    // Request time data from server and set response to appropriate TextViews
     private void setTime(String lat, String lon) {
         mDisposable = mRestRepo.getSunriseSunsetApi()
                 .getSunriseSunset(lat, lon)

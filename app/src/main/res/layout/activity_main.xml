@@ -108,23 +108,4 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toBottomOf="@id/et_sunrise_time" />
-
-
-    <!--for test-->
-    <TextView
-        android:id="@+id/test_tv_lat"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent" />
-
-    <TextView
-        android:id="@+id/test_tv_lon"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="20dp"
-        app:layout_constraintBottom_toBottomOf="@id/test_tv_lat"
-        app:layout_constraintLeft_toRightOf="@id/test_tv_lat" />
-
-
 </android.support.constraint.ConstraintLayout>
