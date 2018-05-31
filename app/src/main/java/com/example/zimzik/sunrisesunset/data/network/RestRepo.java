@@ -18,9 +18,6 @@ public class RestRepo {
 
 
     public RestRepo() {
-        /*HttpLoggingInterceptor logging = new HttpLoggingInterceptor(log -> Log.d(TAG, log));
-        logging.setLevel(HttpLoggingInterceptor.Level.BODY);*/
-
         OkHttpClient client = new OkHttpClient.Builder()
                 .addInterceptor(new HttpLoggingInterceptor())
                 .build();

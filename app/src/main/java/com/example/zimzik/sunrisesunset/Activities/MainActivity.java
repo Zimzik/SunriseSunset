@@ -61,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPlaceSelected(Place place) {
                 Log.i(TAG, "Place coordinates: lat " + place.getLatLng().latitude + ", lon " + place.getLatLng().longitude);
-                setTime(formatCoordinate(place.getLatLng().latitude), formatCoordinate(place.getLatLng().longitude));
+                setTime(formatCoordinate(place.getLatLng().latitude), formatCoordinate(place.getLatLng().longitude * -1));
             }
 
             @Override
@@ -164,30 +164,13 @@ public class MainActivity extends AppCompatActivity {
 
     private void refreshTime(@Nullable Location location) {
         String provider = location == null ? "" : location.getProvider();
+        String lat = location == null ? "" : formatCoordinate(location.getLatitude());
+        String lon = location == null ? "" : formatCoordinate(location.getLongitude() * -1);
 
-        Log.i(TAG, provider + " " + formatLatitude(location) + " " + formatLongitude(location));
-
-        String lat = formatLatitude(location);
-        String lon = formatLongitude(location);
+        Log.i(TAG, provider + " " + lat + " " + lon);
         tvLat.setText("lat: " + lat);
         tvLon.setText("lon: " + lon);
         setTime(lat, lon);
-    }
-
-    private String formatLatitude(Location location) {
-        if (location == null) {
-            return "";
-        } else {
-            return String.format(Locale.getDefault(), "%1$.6f", location.getLatitude());
-        }
-    }
-
-    private String formatLongitude(Location location) {
-        if (location == null) {
-            return "";
-        } else {
-            return String.format(Locale.getDefault(), "%1$.6f", location.getLongitude() * -1);
-        }
     }
 
     private String formatCoordinate(Double d) {
