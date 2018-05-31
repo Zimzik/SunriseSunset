@@ -5,15 +5,7 @@ import com.google.gson.annotations.SerializedName;
 public class SunriseSunset {
 
     @SerializedName("results")
-    private Resilts mResults;
-
-    private class Resilts {
-        @SerializedName("sunrise")
-        private String mSunrise;
-
-        @SerializedName("sunset")
-        private String mSunset;
-    }
+    private Results mResults;
 
     @SerializedName("status")
     private String mStatus;
@@ -30,5 +22,11 @@ public class SunriseSunset {
         return mResults.mSunset;
     }
 
+    private class Results {
+        @SerializedName("sunrise")
+        private String mSunrise;
 
+        @SerializedName("sunset")
+        private String mSunset;
+    }
 }

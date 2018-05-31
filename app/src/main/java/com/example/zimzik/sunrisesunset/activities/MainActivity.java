@@ -1,4 +1,4 @@
-package com.example.zimzik.sunrisesunset.Activities;
+package com.example.zimzik.sunrisesunset.activities;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
@@ -25,6 +25,7 @@ import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment;
 import com.google.android.gms.location.places.ui.PlaceSelectionListener;
 
 import java.util.Locale;
+import java.util.Objects;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
@@ -39,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView mTvConnectionError;
     private PlaceAutocompleteFragment mPlaceAutocompleteFragment;
     private LocationManager mLocationManager;
+    private LocationListener mLocationListener;
     private Disposable mDisposable;
     private RestRepo mRestRepo;
     private Boolean mEnableLocationUpdates = true;
@@ -51,8 +53,12 @@ public class MainActivity extends AppCompatActivity {
         mTvSunriseTime = findViewById(R.id.et_sunrise_time);
         mTvSunsetTime = findViewById(R.id.et_sunset_time);
         mTvConnectionError = findViewById(R.id.et_connection_error);
+
+        // initialization location listener
+        mLocationListener = initLocationListener();
+
         mPlaceAutocompleteFragment = (PlaceAutocompleteFragment) getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment);
-        mPlaceAutocompleteFragment.getView().setVisibility(View.INVISIBLE);
+        Objects.requireNonNull(mPlaceAutocompleteFragment.getView()).setVisibility(View.INVISIBLE);
 
         //  Handle when user choose in widget another place from search list
         mPlaceAutocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
@@ -110,6 +116,45 @@ public class MainActivity extends AppCompatActivity {
         mDisposable.dispose();
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // do smth
+            } else {
+                Toast.makeText(this, "You didn't give permission to access device location", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    private LocationListener initLocationListener() {
+        return new LocationListener() {
+
+            @Override
+            public void onLocationChanged(Location location) {
+                refreshTime(location);
+            }
+
+            @Override
+            public void onProviderDisabled(String provider) {
+            }
+
+            @Override
+            public void onProviderEnabled(String provider) {
+                if (ActivityCompat.checkSelfPermission(getBaseContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getBaseContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    return;
+                }
+                refreshTime(mLocationManager.getLastKnownLocation(provider));
+            }
+
+            @Override
+            public void onStatusChanged(String provider, int status, Bundle extras) {
+
+            }
+        };
+    }
+
     // Enable request location update. Coordinates of current place refresh every 10 seconds
     private void enableRequestLocationUpdate() {
         mLocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
@@ -117,45 +162,19 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
-                1000 * 10, 10, locationListener);
+                1000 * 10, 10, mLocationListener);
         mLocationManager.requestLocationUpdates(
                 LocationManager.NETWORK_PROVIDER, 1000 * 10, 10,
-                locationListener);
+                mLocationListener);
     }
 
     // Disable request location update
     private void disableRequestLocationUpdate() {
         if (mLocationManager != null) {
-            mLocationManager.removeUpdates(locationListener);
+            mLocationManager.removeUpdates(mLocationListener);
             mLocationManager = null;
         }
     }
-
-    private LocationListener locationListener = new LocationListener() {
-
-        @Override
-        public void onLocationChanged(Location location) {
-            refreshTime(location);
-        }
-
-        @Override
-        public void onProviderDisabled(String provider) {
-        }
-
-        @Override
-        public void onProviderEnabled(String provider) {
-            if (ActivityCompat.checkSelfPermission(getBaseContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getBaseContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                return;
-            }
-            refreshTime(mLocationManager.getLastKnownLocation(provider));
-        }
-
-        @Override
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-
-        }
-    };
-
     // Formatting coordinate string to suitable format for transfer to URL
     private void refreshTime(@Nullable Location location) {
         String provider = location == null ? "" : location.getProvider();
@@ -173,8 +192,8 @@ public class MainActivity extends AppCompatActivity {
 
     // Request time data from server and set response to appropriate TextViews
     private void setTime(String lat, String lon) {
-        mDisposable = mRestRepo.getSunriseSunsetApi()
-                .getSunriseSunset(lat, lon)
+        mDisposable = mRestRepo
+                .getSunriseSunsetApi(lat, lon)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(place -> {
@@ -187,17 +206,5 @@ public class MainActivity extends AppCompatActivity {
 
     private Boolean permissionsGranted() {
         return ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == PERMISSION_REQUEST_CODE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // do smth
-            } else {
-                Toast.makeText(this, "You didn't give permission to access device location", Toast.LENGTH_LONG).show();
-            }
-        }
     }
 }

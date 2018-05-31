@@ -1,10 +1,9 @@
 package com.example.zimzik.sunrisesunset.data.network;
 
-import android.util.Log;
-
 import com.example.zimzik.sunrisesunset.data.network.apis.SunriseSunsetApi;
 import com.example.zimzik.sunrisesunset.data.network.models.SunriseSunset;
 
+import io.reactivex.Single;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
@@ -13,7 +12,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class RestRepo {
     private static final String TAG = RestRepo.class.getSimpleName();
-    private Retrofit sRetrofit;
+    private Retrofit mRetrofit;
 
 
 
@@ -22,7 +21,7 @@ public class RestRepo {
                 .addInterceptor(new HttpLoggingInterceptor())
                 .build();
 
-        sRetrofit = new Retrofit.Builder()
+        mRetrofit = new Retrofit.Builder()
                 .baseUrl("https://api.sunrise-sunset.org/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
@@ -30,7 +29,7 @@ public class RestRepo {
                 .build();
     }
 
-    public SunriseSunsetApi getSunriseSunsetApi() {
-        return sRetrofit.create(SunriseSunsetApi.class);
+    public Single<SunriseSunset> getSunriseSunsetApi(String lat, String lon) {
+        return mRetrofit.create(SunriseSunsetApi.class).getSunriseSunset(lat, lon);
     }
 }
