@@ -12,17 +12,17 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.widget.AutoCompleteTextView;
+import android.view.View;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.zimzik.sunrisesunset.R;
 import com.example.zimzik.sunrisesunset.data.network.RestRepo;
-import com.example.zimzik.sunrisesunset.data.network.models.SunriseSunset;
-import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.location.places.AutocompletePredictionBuffer;
-import com.google.android.gms.location.places.Places;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment;
+import com.google.android.gms.location.places.ui.PlaceSelectionListener;
 
 import java.util.Locale;
 
@@ -36,10 +36,13 @@ public class MainActivity extends AppCompatActivity {
     private static final int PERMISSION_REQUEST_CODE = 123;
     private TextView mTvSunriseTime;
     private TextView mTvSunsetTime;
+    private TextView mTvConnectionError;
+    private PlaceAutocompleteFragment mPlaceAutocompleteFragment;
     private LocationManager mLocationManager;
-    private AutoCompleteTextView mActvPlaces;
     private Disposable mDisposable;
     private RestRepo mRestRepo;
+    private Boolean mEnableLocationUpdates = true;
+
     //fot test
     private TextView tvLat;
     private TextView tvLon;
@@ -50,9 +53,22 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         mTvSunriseTime = findViewById(R.id.et_sunrise_time);
         mTvSunsetTime = findViewById(R.id.et_sunset_time);
-        mActvPlaces = findViewById(R.id.actv_places);
-        mActvPlaces.setEnabled(false);
+        mTvConnectionError = findViewById(R.id.et_connection_error);
+        mPlaceAutocompleteFragment = (PlaceAutocompleteFragment) getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment);
+        mPlaceAutocompleteFragment.getView().setVisibility(View.INVISIBLE);
 
+        mPlaceAutocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+            @Override
+            public void onPlaceSelected(Place place) {
+                Log.i(TAG, "Place coordinates: lat " + place.getLatLng().latitude + ", lon " + place.getLatLng().longitude);
+                setTime(formatCoordinate(place.getLatLng().latitude), formatCoordinate(place.getLatLng().longitude));
+            }
+
+            @Override
+            public void onError(Status status) {
+                Log.i(TAG, "An error occurred: " + status);
+            }
+        });
 
         // for test
 
@@ -64,13 +80,17 @@ public class MainActivity extends AppCompatActivity {
         RadioGroup rgChooseLocation = findViewById(R.id.rg_choose_location);
         rgChooseLocation.setOnCheckedChangeListener((group, checkedId) -> {
             if (checkedId == R.id.rb_other_location) {
-                mActvPlaces.setEnabled(true);
+                mPlaceAutocompleteFragment.getView().setVisibility(View.VISIBLE);
+                disableRequestLocationUpdate();
+                mEnableLocationUpdates = false;
             } else {
-                mActvPlaces.setEnabled(false);
+                mPlaceAutocompleteFragment.getView().setVisibility(View.INVISIBLE);
+                enableRequestLocationUpdate();
+                mEnableLocationUpdates = true;
             }
         });
-        
-        mLocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+
+       // mLocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 
         if (!permissionsGranted()) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSION_REQUEST_CODE);
@@ -81,6 +101,25 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        if (mEnableLocationUpdates) {
+            enableRequestLocationUpdate();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        disableRequestLocationUpdate();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mDisposable.dispose();
+    }
+
+    private void enableRequestLocationUpdate() {
+        mLocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
@@ -89,19 +128,13 @@ public class MainActivity extends AppCompatActivity {
         mLocationManager.requestLocationUpdates(
                 LocationManager.NETWORK_PROVIDER, 1000 * 10, 10,
                 locationListener);
-        checkEnabled();
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        mLocationManager.removeUpdates(locationListener);
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        mDisposable.dispose();
+    private void disableRequestLocationUpdate() {
+        if (mLocationManager != null) {
+            mLocationManager.removeUpdates(locationListener);
+            mLocationManager = null;
+        }
     }
 
     private LocationListener locationListener = new LocationListener() {
@@ -113,12 +146,10 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onProviderDisabled(String provider) {
-            checkEnabled();
         }
 
         @Override
         public void onProviderEnabled(String provider) {
-            checkEnabled();
             if (ActivityCompat.checkSelfPermission(getBaseContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getBaseContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 return;
             }
@@ -159,42 +190,21 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private String formatCoordinate(Double d) {
+        return String.format(Locale.getDefault(), "%1$.6f", d);
+    }
+
     private void setTime(String lat, String lon) {
-        // TODO: 30.05.2018 make Disposable global and dispose in onStop/onDestroy
         mDisposable = mRestRepo.getSunriseSunsetApi()
                 .getSunriseSunset(lat, lon)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(place -> {
+                    mTvConnectionError.setText("");
                     mTvSunriseTime.setText(place.getSunrise());
                     mTvSunsetTime.setText(place.getSunset());
                     Log.i(TAG, place.getSunrise() + " " + place.getSunset());
-                });
-
-                /*gpsApi().getSunriseSunset(lat, lon)
-
-
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(place -> {
-                    mTvSunriseTime.setText(place.getSunrise());
-                    mTvSunsetTime.setText(place.getSunset());
-                    Log.i(TAG, place.getSunrise() + " " + place.getSunset());
-                });*/
-    }
-
-    private void checkEnabled() {
-      /*  if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            tvTitleGPS.setTextColor(Color.GREEN);
-        } else {
-            tvTitleGPS.setTextColor(Color.RED);
-        }
-
-        if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
-            tvTitleNet.setTextColor(Color.GREEN);
-        } else {
-            tvTitleNet.setTextColor(Color.RED);
-        }*/
+                }, throwable -> mTvConnectionError.setText(R.string.error_internet_connection));
     }
 
     private Boolean permissionsGranted() {

@@ -4,4 +4,6 @@
     <string name="sunset_time">Sunset time:</string>
     <string name="current_location">Current location</string>
     <string name="other_location">Other Location</string>
+    <string name="error_connection">Network and GPS are disabled. Current coordinates are not obtained!</string>
+    <string name="error_internet_connection">There are problems with internet connection!</string>
 </resources>

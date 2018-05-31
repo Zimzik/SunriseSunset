@@ -11,8 +11,8 @@
         android:id="@+id/rg_choose_location"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent">
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <RadioButton
             android:id="@+id/rb_current_location"
@@ -29,11 +29,11 @@
             android:layout_weight="1"
             android:text="@string/other_location" />
 
-         <AutoCompleteTextView
-            android:id="@+id/actv_places"
+        <fragment
+            android:id="@+id/place_autocomplete_fragment"
+            android:name="com.google.android.gms.location.places.ui.PlaceAutocompleteFragment"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:drawableLeft="@drawable/places_ic_search"/>
+            android:layout_height="wrap_content" />
     </RadioGroup>
 
 
@@ -41,11 +41,11 @@
         android:id="@+id/iv_sunrise"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:src="@drawable/sunrise"
         android:layout_marginStart="30dp"
         android:layout_marginTop="30dp"
+        android:src="@drawable/sunrise"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/rg_choose_location"/>
+        app:layout_constraintTop_toBottomOf="@id/rg_choose_location" />
 
     <TextView
         android:id="@+id/tv_sunrise"
@@ -61,19 +61,19 @@
         android:id="@+id/et_sunrise_time"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="26sp"
         android:textColor="#CFA22B"
-        app:layout_constraintTop_toBottomOf="@id/tv_sunrise"
+        android:textSize="26sp"
+        app:layout_constraintLeft_toLeftOf="@id/tv_sunrise"
         app:layout_constraintRight_toRightOf="@id/tv_sunrise"
-        app:layout_constraintLeft_toLeftOf="@id/tv_sunrise"/>
+        app:layout_constraintTop_toBottomOf="@id/tv_sunrise" />
 
 
     <ImageView
         android:id="@+id/iv_sunset"
-        android:layout_marginTop="30dp"
-        android:layout_marginEnd="30dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginEnd="30dp"
+        android:layout_marginTop="30dp"
         android:src="@drawable/sunset"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintRight_toRightOf="parent"
@@ -90,32 +90,41 @@
         app:layout_constraintTop_toBottomOf="@id/iv_sunset" />
 
     <TextView
+        android:id="@+id/et_sunset_time"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/et_sunset_time"
-        android:textSize="26sp"
         android:textColor="#CE2C27"
-        app:layout_constraintTop_toBottomOf="@id/et_sunset"
+        android:textSize="26sp"
         app:layout_constraintLeft_toLeftOf="@id/et_sunset"
-        app:layout_constraintRight_toRightOf="@id/et_sunset"/>
+        app:layout_constraintRight_toRightOf="@id/et_sunset"
+        app:layout_constraintTop_toBottomOf="@id/et_sunset" />
+
+    <TextView
+        android:id="@+id/et_connection_error"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:textColor="#a70b0b"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/et_sunrise_time" />
 
 
+    <!--for test-->
     <TextView
         android:id="@+id/test_tv_lat"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        />
+        app:layout_constraintLeft_toLeftOf="parent" />
+
     <TextView
         android:id="@+id/test_tv_lon"
         android:layout_width="wrap_content"
-        android:layout_marginLeft="20dp"
         android:layout_height="wrap_content"
-        app:layout_constraintLeft_toRightOf="@id/test_tv_lat"
-        app:layout_constraintBottom_toBottomOf="@id/test_tv_lat"/>
-
-
+        android:layout_marginLeft="20dp"
+        app:layout_constraintBottom_toBottomOf="@id/test_tv_lat"
+        app:layout_constraintLeft_toRightOf="@id/test_tv_lat" />
 
 
 </android.support.constraint.ConstraintLayout>
